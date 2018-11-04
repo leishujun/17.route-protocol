@@ -1,0 +1,42 @@
+
+
+七层通讯过程有点像我们生活中从厂家寄快递到门拆快递的过程
+
+下层协议为上层提供服务，表示为下层协议是有上层协议的标识的，换种说法就是每一个数据报文中都包含有上层使用什么协议
+
+all people  seem to need process data
+
+physical物理层：0101  比特  bit
+
+data link数据链路层：帧frame        错误检查    MAC地址，物理地址    目标MAC，源MAC      结尾会加一个校验位，用于计算上层的所有
+的数据
+
+network网络层：数据包packet     逻辑地址，IP地址    路由
+
+transport传输层：网段segment    端对端的通信，终端之间的通信   可靠的传输TCP/IP协议    数据检查恢复   速度控制
+
+session会话层：message    session
+
+presention表示层：message    ascii码转换成UTF-8，加密、解密、压缩、解压缩
+
+application应用层：message    各种软件微信、邮件传输协议、远程连接协议、文件传输协议
+
+
+
+网络访问层
+
+intnet层
+
+传输层
+
+应用层
+
+
+
+PDU
+protocol data unit 协议数据单元
+比特  bit
+帧frame
+数据包packet
+网段segment
+message消息

@@ -1,0 +1,110 @@
+
+IGMP  intnet group message protocol
+ICMP  intnet control message protocol
+
+PDU  
+
+OSI 七层模型
+物理层          位     bit
+数据链路层   帧     frame      mac 物理源地址 物理目标地址
+网络层          报文  packet    逻辑地址，通过路由   路由器
+传输层          段     segment     终端之间通信，可靠      tcp、udp
+会话层          
+表示层          ascii，加密解密
+应用层          应用程序之间走不同协议
+
+下层协议是有上层下一的标识
+all  people seem to need process data
+application
+presention
+session
+transport
+network
+data link
+physical
+
+
+单播 unicast           目标是一个人，个人下载文件
+组播                      目标是在组内的人
+多播 multicast        目标是播出的人内
+广播 broadcast       目标是所有人，有范围
+
+
+local area network 基于广播机制
+wan                        基于点对点通信
+
+
+base 基带传输
+10Base2 185m
+10Base5 500m
+
+Twisted-Pair  双绞线
+10BaseT
+         UTP 非屏蔽式双绞线，无法抵消强电磁干扰
+         STP  屏蔽式双绞线，成本相对较高
+
+Fiber-Optic  光纤  
+
+T568B   最大程度上抵消电磁干扰
+橙白橙 绿白蓝 蓝白绿 棕白棕
+100M内实际用到12/36两组线12发送，36接收
+1000M全用到
+
+T568A
+绿白绿 橙白蓝 蓝白橙 棕白棕
+
+
+
+单工     100Base-TX ，一根线收，一根线发
+半双工  同一时间只沿着一个方向收或者发
+全双工  同时发和收
+
+以太网
+工作在数据链路层
+
+mac  media access control
+
+以太网数据报文
+除了Preamble 、
+
+两个工具
+wershark
+tcpdump  
+
+
+冲突域：当一个主机发送报文，另一主机也发送报文，产生冲突，就在一个冲突域中，泛洪
+广播域：一个主机发送广播，另一主机收到，就在同一广播域中
+
+利用镜像端口可以监听信息
+伪造大量MAC地址，把交换机中的MAC地址占满，那么交换机就会转发收到的报文
+
+
+hub 物理层
+网卡、交换机  数据链路层
+路由器  网络层
+
+
+STP  生成树协议避免产生回环，广播风暴
+
+
+TCP/IP 协议
+下层是为上层服务的
+端口号，目的端口用于标识上层应用层的协议
+tcp http：80
+https：443
+ssh 22
+ftp 21
+QQ：udp 8000
+DNS：53
+TFTP：69
+kerbeos：88
+smtp：25
+pop3：110
+imap：143
+smb   445
+
+
+
+cat /etc/services  查看已用过的端口
+dhcp：67，68
+snmp：161

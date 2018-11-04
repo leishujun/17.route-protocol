@@ -1,0 +1,20 @@
+
+
+                           ping 1.1.1.1 
+
+
+查看wireshark中的ping包中的type，看看是request有问题还是reply有问题
+查看是对方没收到ping包，还是己方电脑收到没收到对方的回应
+
+1.
+connection：Network is unreachable
+网络不可达——————————》》》没有路由，添加去往相关网段的路由即可
+
+
+2.
+光标闪烁但是就是ping不通
+
+先看路由，判断对方是否通信，查看是对方没收到ping包，还是己方电脑收到没收到对方的回应
+
+/proc/sys/net/ipv4/icmp_echo_ignore_all  这个配置文件可以禁ping，所以查看这个配置文件是否被修改了
+默认是0就是不禁止回复ping包，但是修改成1就会禁止

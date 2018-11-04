@@ -1,0 +1,10 @@
+
+
+
+ss   性能比netstat要好，
+
+l  listening状态
+t  tcp
+u  udp
+p  pid
+n  数字格式

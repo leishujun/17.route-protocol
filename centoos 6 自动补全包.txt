@@ -1,0 +1,4 @@
+
+
+
+bash-completion.noarch  包可以在centos 6上自动补全命令

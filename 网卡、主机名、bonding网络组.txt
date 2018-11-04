@@ -1,0 +1,252 @@
+域名解析的优先级
+默认情况下是  files dns myhostname
+
+ cat /etc/sysconfig/network
+/etc/nsswitch.conf  域名解析的优先级别
+/etc/hosts     修改域名对应的ip，这样dns就不会对写好的域名进行域名解析，相当于是省去了域名解析这个步骤，那么
+即使dns出了问题，也不会出现无法指向到正确的IP地址的情况，对应关系：是左边是IP地址，右边是域名
+
+
+[root@c7 ~]# cat /etc/hosts   ---》》这是7的配置文件
+127.0.0.1   localhost localhost.localdomain localhost4 localhost4.localdomain4
+::1         localhost localhost.localdomain localhost6 localhost6.localdomain6
+
+cat /etc/nsswitch.conf  文中有这一行
+hosts:      files dns myhostname
+files是指/etc/hosts这个文件，dns域名解析，myhostname是指
+
+
+---------------------------------《修改主机名》-------------------------
+
+6的主机名配置文件位置
+[root@6 ~]# cat /etc/sysconfig/network
+NETWORKING=yes
+HOSTNAME=6
+
+修改完后 exec  bash 可以把提示符改过来
+
+[root@c7 etc]# cat /etc/hostname 
+c7
+
+hostnamectl set-hostname 7
+exec bash 
+修改完主机名后记得刷新一下内存，然后把主机名加到
+/etc/hosts中127.0.0.1那一行的最后面，这样当你修改完主机名后，ping自己的主机名不至于
+ping不通
+
+obsolete  过时 
+
+
+---------------------------------《更改网卡名称》-------------------------
+6
+vim /etc/udev/rules.d/70-persistent-net.rules   
+ethtool -i eth1  查看网卡的驱动                                                  或者     dmesg |grep  eth1
+lsmod |  less    查看系统中加载的所有模块，包括网卡驱动模块
+modprobe  -r   e1000  删除内存中网卡中的驱动模块                  或者    rmmod e1000 
+modprobe e1000  加载网卡驱动模块
+
+
+7
+编辑/etc/default/grub配置文件       
+GRUB_CMDLINE_LINUX="rhgb quiet net.ifnames=0"
+或者      
+直接修改/boot/grub2/grub.cfg，在第一个linux16的最后一行添加   net.ifnames=0   
+
+为grub2生成其配置文件
+grub2-mkconfig -o /etc/grub2.cfg
+
+---------------------------------《静态指定网卡》-------------------------
+6
+生效但是无法保存：
+setup
+system-config-network-tui
+
+
+生效并保存：
+/etc/sysconfig/network-scripts/ifcfg-ens
+
+
+---------------------------------《启用禁用网卡》-------------------------
+
+ifconfig eth0 down/up  链路层断开网卡
+ifdown/ifup  eth0  这种禁用的网卡实际上物理上是没有断开的网线的在ip a中的网线的状态是UP的，这表明在
+
+
+ip a  DOWN/UP      两种情况很明显能看到网线是否能用
+
+
+---------------------------------《临时修改网络IP》-------------------------
+
+ifconfig eth0 192.168.34.1/24
+
+ifconfig eth0：1  6.6.6.6/24   在原来网卡的地址上再配置一个新地址，实际上这个新的地址还是用eth0网卡的地址进行的通讯
+
+
+
+---------------------------------《增加路由》-------------------------------
+
+优先级：
+主机路由>网络路由>默认路由
+
+route  add  -host  172.20.34.1  gw 192.168.34.1  dev eth1    添加主机路由
+route  add  -net   192.168.34.0/24     dev eth1    增加网络路由
+route  del   -net   192.168.34.0/24                        删除      
+
+route add -net default gw 192.168.34.1 dev eth1 metric 200   添加一条网关为192.168.34.1，开销值为200的默认路由
+
+
+---------------------------------《Bonding配置》-------------------------
+
+先在写好名叫ifcfg-bond0的配置文件，路径在下一行
+/etc/sysconfig/network-scripts/ifcfg-bond0
+DEVICE=bond0
+BOOTPROTO=none
+BONDING_OPTS= “miimon=100 mode=0”    
+PREFIX=24
+
+再修改要进行配置的网卡，添加下面那三行
+/etc/sysconfig/network-scripts/ifcfg-eth0
+DEVICE=eth0
+BOOTPROTO=none
+MASTER=bond0
+SLAVE=yes
+USERCTL=no
+
+/proc/net/bonding/bond0    查看bond0状态
+ 
+
+miimon ：是用来进行链路监测的。如果miimon=100，那么系统每100ms 监测
+一次链路连接状态，如果有一条线路不通就转入另一条线路
+
+mode：采用0的模式意思是两个或多个网卡一起工作
+
+
+
+---------------------------------《nmcli管理网络》-------------------------
+
+nmcli  network  manager   client
+
+创建新连接static ，指定静态IP，不自动连接
+nmcti con add con-name static ifname eth0 autoconnect no type Ethernet ipv4.addresses 172.25.X.10/24 ipv4.gateway 172.25.X.254
+
+修改连接设置
+nmcli con mod“static” connection.autoconnect no
+nmcli con mod “static” ipv4.dns 172.25.X.254
+nmcli con mod “static” +ipv4.dns 8.8.8.8
+nmcli con mod “static” -ipv4.dns 8.8.8.8
+nmcli con mod “static” ipv4.addresses “172.25.X.10/24 172.25.X.254”
+nmcli con mod “static” +ipv4.addresses 10.10.10.10/16
+
+DNS设置，存放在/etc/resolv.conf文件中
+PEERDNS=no 表示当IP通过dhcp自动获取时，dns仍是手动设置，不自动获取
+等价于下面命令：
+nmcli con mod “system eth0” ipv4.ignore-auto-dns yes
+
+等配置完成后需要重新加载配置
+nmcli con reload
+
+
+添加bonding接口      //添加类型为bonding，名字为mybond0，模式为1的组
+nmcli con add type bond con-name mybond0 ifname mybond0 mode         
+active-backup              
+添加从属接口     bond-slave  从属接口
+nmcli con add type bond-slave ifname ens7 master mybond0
+nmcli con add type bond-slave ifname ens3 master mybond0
+注意：如无为从属接口提供连接名，则该名称是接口名称加类型构成
+
+要启动绑定，首先启动从属接口
+nmcli con up bond-slave-eth0
+nmcli con up bond-slave-eth1
+
+启动绑定
+nmcli con up mybond0
+
+--------------《《《前面我们手动实现了bonding，那我们用nmcli如何实现实现bonding呢？》》》----------
+1.先创建网络组接口
+
+nmcli con add type team con-name CNAME ifname INAME [config JSON]
+CNAME 连接名，INAME 接口名
+JSON 指定runner方式
+格式：'{"runner": {"name": "METHOD"}}'
+METHOD 可以是broadcast, roundrobin,
+activebackup, loadbalance, lacp
+
+
+2.创建port接口
+
+nmcli con add type team-slave con-name CNAME ifname INAME master
+TEAM
+CNAME 连接名
+INAME 网络接口名
+TEAM 网络组接口名
+
+连接名若不指定，默认为team-slave-IFACE
+
+nmcli dev dis INAME
+
+nmcli con up CNAME
+INAME 设备名 CNAME 网络组接口名或port接口
+
+
+--------------------------------------------《网络组示例》------------------------------------
+
+nmcli con add type team con-name team0 ifname team0 config ‘{“runner”: {“name”: “loadbalance”}}‘ ipv4.addresses  192.168.1.100/24 ipv4.method manual
+
+nmcli con add con-name team0-eth1 type team-slave ifname eth1 master team0
+nmcli con add con-name team0-eth2 type team-slave ifname eth2 master team0
+nmcli con up team0
+nmcli con up team0-eth1
+nmcli con up team0-eth2
+teamdctl team0 state
+nmcli dev dis eth1
+
+ip link
+nmcli con add type team con-name team0 ifname team0 config '{"runner": {"name": "activebackup"}}'
+nmcli con mod team0 ipv4.addresses '192.168.0.100/24'
+nmcli con mod team0 ipv4.method manual
+nmcli con add con-name team0-port1 type team-slave ifname eth1 master team0
+nmcli con add con-name team0-port2 type team-slave ifname eth2 master team0
+teamdctl team0 state
+
+ping -I team0 192.168.0.254
+nmcli dev dis eno1
+teamdctl team0 state
+nmcli con up team0-port1
+nmcli dev dis eno2
+teamdctl team0 state
+nmcli con up team0-port2
+teamdctl team0 state
+
+
+
+-----------------------------------《《《管理网络组配置文件》》》-------------------------------------------
+/etc/sysconfig/network-scripts/ifcfg-team0
+DEVICE=team0
+DEVICETYPE=Team
+TEAM_CONFIG="{\"runner\": {\"name\": \"broadcast\"}}"
+BOOTPROTO=none
+IPADDR0=172.25.5.100
+PREFIX0=24
+NAME=team0
+ONBOOT=yes
+
+删除网络组
+nmcli connection down team0
+teamdctl team0 state
+nmcli connection show
+nmcli connectioni delete team0-eth0
+nmcli connectioni delete team0-eth1
+nmcli connection show
+
+
+
+
+
+
+
+
+
+
+
+
+
